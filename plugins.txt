@@ -1,4 +1,7 @@
-git:latest
-github:latest
 copyartifact:latest
+credentials:latest
+git:latest
+github-api:latest
+github:latest
+scm-api:latest
 ws-cleanup:latest
