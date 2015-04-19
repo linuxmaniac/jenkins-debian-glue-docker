@@ -19,7 +19,9 @@ RUN apt-get update && apt-get install -y \
 COPY jenkins_sudo /etc/sudoers.d/jenkins
 RUN chmod 440 /etc/sudoers.d/jenkins
 
-RUN mkdir -p /srv/repository/ 
+# root of repositories as volumen so it
+# can be persisted and survive image upgrades
+VOLUME /srv/repository
 RUN chown -R jenkins /srv/repository
 
 USER jenkins
