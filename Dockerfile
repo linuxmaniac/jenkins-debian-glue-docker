@@ -13,7 +13,8 @@ RUN apt-get update && apt-get install -y \
 	jenkins-debian-glue-buildenv-piuparts \
 	jenkins-debian-glue-buildenv-slave \
 	jenkins-debian-glue-buildenv-taptools \
-	jenkins-debian-glue-buildenv-lintian && \
+	jenkins-debian-glue-buildenv-lintian \
+	jenkins-job-builder && \
 	rm -rf /var/lib/apt/lists/*
 
 COPY jenkins_sudo /etc/sudoers.d/jenkins

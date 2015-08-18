@@ -122,4 +122,5 @@ As always - please ensure that you know how to drive docker - especially volume 
 
 # Questions?
 
-Jump on irc.freenode.net and the #jenkins room. Ask!
+Jump on irc.freenode.net and the #jenkins room for jenkins related questions
+and #jenkins-debian-glue for questions related to jdg. Enjoy!
