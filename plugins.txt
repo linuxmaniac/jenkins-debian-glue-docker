@@ -1,7 +1,9 @@
 copyartifact:latest
 credentials:latest
+git-client:latest
 git:latest
 github-api:latest
 github:latest
+parameterized-trigger:latest
 scm-api:latest
 ws-cleanup:latest
