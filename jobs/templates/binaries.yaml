@@ -1,0 +1,74 @@
+name: '{name}-binaries'
+project-type: freestyle
+node: cowbuilder
+auth-token: jenkins_ci
+description: |
+  Build Debian binary package of {name}.<br/>
+  APT instructions:<br/>
+  <pre>
+  deb     https://jenkins.mgm.sipwise.com/debian {name}-$DISTRI main
+  deb-src https://jenkins.mgm.sipwise.com/debian {name}-$DISTRI main
+  wget -O - https://jenkins.mgm.sipwise.com/debian/EE5E097D.asc | sudo apt-key add -
+  </pre>
+  <!-- Do NOT edit this job through the web, it is generated via jenkins-job-builder! -->
+  <!-- {labels} -->
+logrotate:
+  numToKeep: '{logrotate_keep}'
+execution-strategy:
+  sequential: true
+builders:
+  - shell: |
+     echo "* Removing files workspace before copying artifacts from another project. *"
+     rm -f ./* || true
+  - copyartifact:
+      project: '{name}-source'
+      filter: '*'
+      which-build: upstream-build
+      fallback-to-last-successful: true
+  - copyartifact:
+      project: '{name}-get-code'
+      filter: '*.list,preferences'
+      target: 'sources.list.d/'
+      which-build: upstream-build
+      fallback-to-last-successful: true
+  - shell: |
+      export DEB_BUILD_OPTIONS="parallel=$(nproc)"
+      export BUILD_ONLY=true
+      export SUDO_CMD=sudo
+      export COWBUILDER_DIST=$distribution
+      export POST_BUILD_HOOK=/usr/bin/jdg-debc
+      export USER_BINDMOUNTS="$WORKSPACE/sources.list.d"
+      /usr/bin/build-and-provide-package
+  - shell: |
+      mkdir -p report
+      /usr/bin/lintian-junit-report --lintian-opt="--profile=sipwise" *.changes > report/lintian.xml
+  - shell: |
+      mkdir -p report adt
+      touch adt/summary # do not fail if no autopkgtest run took place
+      /usr/bin/adtsummary_tap adt/summary > report/autopkgtest.tap
+parameters:
+  - choice:
+      name: distribution
+      description: 'distribution that the package should be build against'
+      choices: '{obj:distributions}'
+publishers:
+  - archive:
+      artifacts: '**/*.gz,**/*.bz2,**/*.xz,**/*.deb,**/*.dsc,**/*.changes,**/lintian.txt'
+      fingerprint: true
+  - tap:
+      results: 'report/*.tap'
+      todo-is-failure: false
+  - junit:
+      results: '**/lintian.xml'
+      keep-long-stdio: false
+  - jabber: *default_jabber
+  - groovy-postbuild: *default_groovy_postbuild
+  - trigger-parameterized-builds:
+      - project: '{name}-repos'
+        condition: UNSTABLE_OR_BETTER
+        current-parameters: CurrentBuildParameters
+        predefined-parameters: *predefined-parameters
+wrappers:
+  - timestamps
+  - workspace-cleanup:
+      dirmatch: false

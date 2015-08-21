@@ -1,0 +1,51 @@
+# This jenkins-job-build configuration sets up Jenkins jobs
+# for building Debian packages of Sipwise internal (non-ngcp) projects
+
+## alias definitions
+- defaults: !include defaults.yaml
+## global template defaults
+- defaults: !include defaults_global.yaml
+
+## project defaults
+- default_project: &default_project
+    name: default_project
+    jobs:
+      - '{name}-gerrit'
+      - '{name}-source-tests'
+      - '{name}-get-code'
+      - '{name}-tap-test'
+      - '{name}-source'
+      - '{name}-binaries'
+      - '{name}-repos'
+      - '{name}-piuparts'
+    labels:
+      - internal-project
+
+- defaults: !include jenkins-debian-glue/default.yaml
+
+## list of projects with their custom configurations
+- job-template: !include jenkins-debian-glue-binaries.yaml
+- job-template: !include jenkins-debian-glue-get-code.yaml
+- job-template: !include jenkins-debian-glue-repos.yaml
+
+## default templates
+- job-template: !include templates/binaries.yaml
+- job-template: !include templates/gerrit.yaml
+- job-template: !include templates/get-code.yaml
+- job-template: !include templates/piuparts.yaml
+- job-template: !include templates/repos.yaml
+- job-template: !include templates/source-tests.yaml
+- job-template: !include templates/source.yaml
+- job-template: !include templates/tap-test.yaml
+
+- project:
+    name: jenkins-debian-glue
+    default: default_jbg
+    jobs:
+      - 'jenkins-debian-glue-get-code'
+      - '{name}-source-tests'
+      - '{name}-tap-test'
+      - '{name}-source'
+      - 'jenkins-debian-glue-binaries'
+      - 'jenkins-debian-glue-repos'
+    <<: *default_project

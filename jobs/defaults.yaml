@@ -1,0 +1,57 @@
+## alias definitions
+name: definitions
+logrotate_keep: 15
+distributions: !!python/tuple &distributions
+ - wheezy
+ - jessie
+ - squeeze
+ - lenny
+branch: 'master'
+tag: 'none'
+release: 'none'
+scm: &git_scm
+  - git: &git_scm_base
+      url: 'git://git.mgm.sipwise.com/{name}'
+      name: origin
+      basedir: 'source'
+      branches:
+        - '{branch}'
+      wipe-workspace: false
+      clean:
+        after: true
+parameters: &default_parameters
+  - string:
+      name: uuid
+      description: 'uuid to track downstream jobs for different executions'
+      default: ''
+  - string:
+      name: tag
+      description: 'tag that should be used for testing, leave at "none" to not use it'
+      default: '{tag}'
+  - string:
+      name: branch
+      description: 'branch that should be used for testing, note that the setting is ignored if "tag" is set to something other than "none"'
+      default: '{branch}'
+  - string:
+      name: release
+      description: 'release version if the results should be part of a release (otherwise leave it at "none")'
+      default: '{release}'
+  - choice:
+      name: distribution
+      description: 'distribution that the package should be tested against'
+      choices: '{obj:distributions}'
+predefined-parameters: &predefined-parameters |
+  uuid=$uuid
+  release=$release
+  branch=$branch
+  tag=$tag
+  distribution=$distribution
+  ppa=$ppa
+jabber: &default_jabber
+  group-targets:
+    - "jenkins@conference.sipwise.com"
+  strategy: all
+labels:
+  - jjb-managed
+groovy-postbuild: &default_groovy_postbuild
+  !include-raw-escape common/postbuild.groovy

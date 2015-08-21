@@ -1,0 +1,9 @@
+## global template defaults
+name: global
+logrotate_keep: 15
+distributions: *distributions
+branch: 'master'
+tag: 'none'
+release: 'none'
+release_latest: mr4.0.1
+parameters: *default_parameters

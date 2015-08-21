@@ -1,0 +1,36 @@
+name: 'jenkins-debian-glue-get-code'
+project-type: freestyle
+node: lint
+description: |
+  Default job to produce proper source
+  <!-- Do NOT edit this job through the web, it is generated via jenkins-job-builder! -->
+  <!-- {labels} -->
+auth-token: sipwise_jenkins_ci
+scm: *scm_jenkins-debian-glue
+logrotate:
+  numToKeep: '{logrotate_keep}'
+disabled: false
+parameters: *default_parameters
+builders:
+  - shell:
+      !include-raw-escape common/generate_source.sh
+publishers:
+  - archive:
+      artifacts: 'source.tar.gz'
+      fingerprint: true
+  - jabber: *default_jabber
+  - groovy-postbuild: *default_groovy_postbuild
+  - trigger-parameterized-builds-order:
+      - project: '{name}-source-tests'
+        condition: UNSTABLE_OR_BETTER
+        current-parameters: CurrentBuildParameters
+        property-file: git.prop
+        predefined-parameters: |
+          release=$release
+          branch=$branch
+          tag=$tag
+          distribution=$distribution
+          ppa=$ppa
+        order: current-parameters, property-file
+wrappers:
+  - timestamps

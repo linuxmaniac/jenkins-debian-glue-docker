@@ -1,0 +1,6 @@
+name: default_jbg
+default_scm: &scm_jenkins-debian-glue
+  - git:
+      url: 'git://github.com/mika/jenkins-debian-glue.git'
+      <<: *git_scm_base
+<<: *default_project

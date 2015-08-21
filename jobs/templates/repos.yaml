@@ -1,0 +1,64 @@
+name: '{name}-repos'
+project-type: freestyle
+description: |
+  Repository handling for Debian packages of {name}.
+  APT instructions:<br/>
+  <pre>
+  deb     https://jenkins.mgm.sipwise.com/debian {name}-$DISTRI main
+  deb-src https://jenkins.mgm.sipwise.com/debian {name}-$DISTRI main
+  wget -O - https://jenkins.mgm.sipwise.com/debian/EE5E097D.asc | sudo apt-key add -
+  </pre>
+  <!-- Do NOT edit this job through the web, it is generated via jenkins-job-builder! -->
+  <!-- {labels} -->
+node: repository
+auth-token: jenkins_ci
+logrotate:
+  numToKeep: '{logrotate_keep}'
+execution-strategy:
+  sequential: true
+builders:
+  - copyartifact:
+      project: '{name}-binaries'
+      filter: '*'
+      which-build: upstream-build
+      target: 'binaries/'
+      fallback-to-last-successful: false
+      flatten: true
+  - copyartifact:
+      project: '{name}-get-code'
+      filter: '*.list,preferences'
+      which-build: upstream-build
+      target: 'sources.list.d/'
+      fallback-to-last-successful: false
+      flatten: true
+  - shell: |
+      /usr/bin/jdg-repos
+publishers:
+  - flexible-publish:
+      expression: '^release-mr\d\.\d.*-update$'
+      label: '$release'
+      properties: |
+        release=$release
+        uuid=$uuid
+        PROJECTNAME={name}
+      projects: 'release-update, '
+      condition: SUCCESS
+      trigger-with-no-parameters: 'false'
+  - archive:
+      artifacts: '**/*.gz,**/*.bz2,**/*.xz,**/*.deb,**/*.dsc,**/*.changes'
+      fingerprint: true
+  - jabber: *default_jabber
+  - groovy-postbuild: *default_groovy_postbuild
+  - trigger-parameterized-builds:
+      - project: '{name}-piuparts'
+        condition: UNSTABLE_OR_BETTER
+        current-parameters: CurrentBuildParameters
+        predefined-parameters: *predefined-parameters
+      - project: '{name}-docker-ppa'
+        condition: UNSTABLE_OR_BETTER
+        current-parameters: CurrentBuildParameters
+        predefined-parameters: *predefined-parameters
+wrappers:
+  - timestamps
+  - workspace-cleanup:
+      dirmatch: false

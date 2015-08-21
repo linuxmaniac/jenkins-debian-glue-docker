@@ -1,0 +1,4 @@
+git+https://github.com/linuxmaniac/jenkins-job-builder.git/@d445e89c930fb229ff4e659fdc9e72590f84bc28
+extentions/flexiblepublisher
+extentions/triggerparameterizedbuildsorder
+unittest-xml-reporting

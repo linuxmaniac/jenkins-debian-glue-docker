@@ -1,0 +1,56 @@
+name: '{name}-source'
+project-type: freestyle
+node: git
+description: |
+  Build Debian source package of {name}.<br/>
+  APT instructions:<br/>
+  <pre>
+  deb     https://jenkins.mgm.sipwise.com/debian {name}-$DISTRI main
+  deb-src https://jenkins.mgm.sipwise.com/debian {name}-$DISTRI main
+  wget -O - https://jenkins.mgm.sipwise.com/debian/EE5E097D.asc | sudo apt-key add -
+  </pre>
+  <!-- Do NOT edit this job through the web, it is generated via jenkins-job-builder! -->
+  <!-- {labels} -->
+auth-token: jenkins_ci
+execution-strategy:
+  sequential: true
+logrotate:
+  numToKeep: '{logrotate_keep}'
+disabled: false
+parameters: *default_parameters
+builders:
+  - shell: |
+     echo "* Removing files workspace before copying artifacts from another project. *"
+     rm -f ./* || true
+     echo "* Removing source. *"
+     rm -rf source || true
+  - copyartifact:
+      project: '{name}-source-tests'
+      filter: 'source.tar.gz'
+      which-build: upstream-build
+      fallback-to-last-successful: true
+  - shell:
+      !include-raw-escape common/extract_source.sh
+  - shell: |
+      export DEBEMAIL="Jenkins Sipwise <jenkins@sipwise.com>"
+      /usr/bin/generate-git-snapshot
+  - shell: |
+      mkdir -p report
+      /usr/bin/lintian-junit-report --lintian-opt="--profile=sipwise" *.dsc > report/lintian.xml
+publishers:
+  - archive:
+      artifacts: '*.gz,*.bz2,*.xz,*.deb,*.dsc,*.changes,lintian.txt'
+      excludes: 'source.tar.gz'
+      fingerprint: true
+  - junit:
+      results: '**/lintian.xml'
+      keep-long-stdio: false
+  - jabber: *default_jabber
+  - groovy-postbuild: *default_groovy_postbuild
+  - trigger-parameterized-builds:
+      - project: '{name}-binaries'
+        condition: UNSTABLE_OR_BETTER
+        current-parameters: CurrentBuildParameters
+        predefined-parameters: *predefined-parameters
+wrappers:
+  - timestamps

@@ -1,0 +1,46 @@
+name: '{name}-tap-test'
+project-type: freestyle
+node: tap
+description: |
+  Defined tests job
+  <!-- Do NOT edit this job through the web, it is generated via jenkins-job-builder! -->
+  <!-- {labels} -->
+auth-token: jenkins_ci
+logrotate:
+  numToKeep: '{logrotate_keep}'
+disabled: false
+builders:
+  - shell: |
+     echo "* Removing files workspace before copying artifacts from another project. *"
+     rm -f ./* || true
+     echo "* Removing source. *"
+     rm -rf source || true
+  - copyartifact:
+      project: '{name}-get-code'
+      filter: 'source.tar.gz'
+      which-build: upstream-build
+      fallback-to-last-successful: true
+  - shell:
+      !include-raw-escape common/extract_source.sh
+  - shell: |
+      /usr/bin/tap_tool_dispatcher
+publishers:
+  - tap:
+      results: 'reports/**'
+      enable-subtests: true
+      todo-is-failure: true
+  - jabber: *default_jabber
+  - groovy-postbuild: *default_groovy_postbuild
+  - workspace-cleanup:
+      include:
+        - "*"
+      dirmatch: true
+      fail-build: false
+      clean-if:
+        - success: true
+        - unstable: false
+        - failure: false
+        - aborted: false
+        - not-built: false
+wrappers:
+  - timestamps

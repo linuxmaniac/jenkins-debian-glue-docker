@@ -1,0 +1,56 @@
+name: '{name}-gerrit'
+project-type: freestyle
+description: |
+  Gerrit Jenkins job listening for code review related events for {name} project.
+  <!-- Do NOT edit this job through the web, it is generated via jenkins-job-builder! -->
+  <!-- {labels} -->
+disabled: false
+logrotate:
+  numToKeep: '{logrotate_keep}'
+execution-strategy:
+  sequential: true
+auth-token: jenkins_ci
+node: dummy
+triggers:
+  - gerrit:
+      projects:
+        - project-compare-type: 'PLAIN'
+          project-pattern: '{name}'
+          branches:
+            - branch-compare-type: 'PLAIN'
+              branch-pattern: 'master'
+            - branch-compare-type: 'REG_EXP'
+              branch-pattern: '^mr[0-9]+.*$'
+      skip-vote:
+          successful: false
+          failed: false
+          unstable: false
+          notbuilt: false
+      silent: true
+      escape-quotes: true
+      no-name-and-email: false
+      trigger-on:
+        - change-merged-event
+        - patchset-created-event
+      server-name: 'gerrit.mgm.sipwise.com'
+builders:
+  - shell: '/usr/bin/jdg-gerrit'
+  - conditional-step:
+      condition-kind: file-exists
+      condition-filename: trigger_parameters.txt
+      on-evaluation-failure: run
+      steps:
+        - trigger-builds:
+            - project: '{name}-get-code'
+              property-file: trigger_parameters.txt
+publishers:
+  - archive:
+      artifacts: 'trigger_parameters.txt'
+      allow-empty: true
+      fingerprint: true
+  - jabber: *default_jabber
+  - groovy-postbuild: *default_groovy_postbuild
+wrappers:
+  - timestamps
+  - workspace-cleanup:
+      dirmatch: false

@@ -1,0 +1,44 @@
+name: '{name}-source-tests'
+project-type: freestyle
+node: dummy
+description: |
+  Default tests job
+  <!-- Do NOT edit this job through the web, it is generated via jenkins-job-builder! -->
+  <!-- {labels} -->
+auth-token: jenkins_ci
+logrotate:
+  numToKeep: '{logrotate_keep}'
+disabled: false
+parameters: *default_parameters
+builders:
+  - shell: |
+     echo "* Removing files workspace before copying artifacts from another project. *"
+     rm -f ./* || true
+     echo "* Removing source. *"
+     rm -rf source || true
+  - copyartifact:
+      project: '{name}-get-code'
+      filter: 'source.tar.gz'
+      which-build: upstream-build
+      fallback-to-last-successful: true
+  - shell:
+      !include-raw-escape common/extract_source.sh
+  - trigger-builds:
+    - project: '{name}-tap-test'
+      condition: UNSTABLE_OR_BETTER
+      block: true
+      current-parameters: CurrentBuildParameters
+      predefined-parameters: *predefined-parameters
+publishers:
+  - archive:
+      artifacts: 'source.tar.gz'
+      fingerprint: true
+  - jabber: *default_jabber
+  - groovy-postbuild: *default_groovy_postbuild
+  - trigger-parameterized-builds:
+      - project: '{name}-source'
+        condition: UNSTABLE_OR_BETTER
+        current-parameters: CurrentBuildParameters
+        predefined-parameters: *predefined-parameters
+wrappers:
+  - timestamps

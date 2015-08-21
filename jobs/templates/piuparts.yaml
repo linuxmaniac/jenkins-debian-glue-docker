@@ -1,0 +1,62 @@
+name: '{name}-piuparts'
+project-type: freestyle
+description: |
+  Installation and upgrade tests for {name} Debian packages.
+  <!-- Do NOT edit this job through the web, it is generated via jenkins-job-builder! -->
+  <!-- {labels} -->
+disabled: false
+logrotate:
+  numToKeep: 30
+execution-strategy:
+  sequential: true
+auth-token: jenkins_ci
+scm:
+  - git:
+      url: 'git://git.mgm.sipwise.com/piuparts-tests'
+      name: origin
+      basedir: 'source'
+      branches:
+        - '{branch}'
+      wipe-workspace: false
+node: piuparts
+parameters:
+  - string:
+      name: release
+      description: 'release version if the results should be part of a release (otherwise leave it at "none")'
+      default: '{release}'
+  - choice:
+      name: distribution
+      description: 'distribution that the package should be build against'
+      choices: '{obj:distributions}'
+builders:
+  - copyartifact:
+      project: '{name}-binaries'
+      filter: '**.deb'
+      which-build: upstream-build
+      fallback-to-last-successful: true
+      flatten: true
+      target: 'artifacts/'
+  - copyartifact:
+      project: '{name}-get-code'
+      filter: '*.list,preferences'
+      which-build: upstream-build
+      target: 'sources.list.d/'
+      fallback-to-last-successful: false
+      flatten: true
+  - shell: "source/wrapper/piuparts_runner"
+publishers:
+  - tap:
+      results: 'piuparts.tap'
+      planRequired: true
+      failed-tests-mark-build-as-failure: true
+  - archive:
+      artifacts: 'piuparts.*'
+      fingerprint: true
+  - jabber: *default_jabber
+  - groovy-postbuild: *default_groovy_postbuild
+wrappers:
+  - timestamps
+  - workspace-cleanup:
+      dirmatch: true
+      exclude:
+        - "source"
