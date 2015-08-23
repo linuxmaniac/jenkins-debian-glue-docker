@@ -20,6 +20,13 @@ RUN apt-get update && apt-get install -y git \
 COPY jenkins_sudo /etc/sudoers.d/jenkins
 RUN chmod 440 /etc/sudoers.d/jenkins
 
+# uncomment this block for use approx in host
+#ENV DOCKER_IP 172.17.42.1
+#ENV APPROX_PORT 9999
+#ENV JENKINS_UC_DOWNLOAD http://${DOCKER_IP}:${APPROX_PORT}/jenkins_plugins/
+#COPY pbuilderrc /etc/pbuilderrc
+##
+
 # root of repositories as volumen so it
 # can be persisted and survive image upgrades
 VOLUME /srv/repository

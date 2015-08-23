@@ -1,0 +1,8 @@
+# this is your configuration file for pbuilder.
+# the file in /usr/share/pbuilder/pbuilderrc is the default template.
+# /etc/pbuilderrc is the one meant for overwriting defaults in
+# the default template
+[ -z ${DOCKER_IP} ] && DOCKER_IP=172.17.42.1
+[ -z ${APPROX_PORT} ] && APPROX_PORT=9999
+# read pbuilderrc.5 document for notes on specific options.
+MIRRORSITE=http://${DOCKER_IP}:${APPROX_PORT}/debian/
